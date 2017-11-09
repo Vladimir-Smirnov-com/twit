@@ -23,10 +23,6 @@ class StatusServiceSpec extends Specification {
 
     void "Test the updateStatus method correctly persists an instance"() {
 
-        setup:
-        service.groovyPageRenderer = Stub(PageRenderer)
-        //service.brokerMessagingTemplate = Mock(SimpMessagingTemplate)
-
         when: "The updateStatus method is executed"
         String testMessage = 'test message'
         String html = service.updateStatus(testMessage, Person.build().getUserName())
@@ -41,7 +37,7 @@ class StatusServiceSpec extends Specification {
         setup:
         Person currentUser = Person.build().save();
         def twitterSecurityService = Mock(TwitterSecurityService)
-        twitterSecurityService.getCurrentUser() >> currentUser
+        twitterSecurityService.getCurrentUser() >> {currentUser}
         service.twitterSecurityService = twitterSecurityService
         Person followedPerson = Person.build()
         followedPerson.userName = 'followedperson'
@@ -53,6 +49,7 @@ class StatusServiceSpec extends Specification {
         then: "The follow method is executed with a valid instance"
         currentUser.getFollowed().size() == 1
         currentUser.getFollowed().first().getUserName().equals(followedPerson.getUserName())
+        1 * twitterSecurityService.getCurrentUser() >> {currentUser}
     }
 
     void "Test the unfollow method remove user from followed"() {

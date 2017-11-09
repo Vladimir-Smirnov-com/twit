@@ -21,9 +21,10 @@ import java.security.Principal
 @Build(Person)
 class StatusControllerSpec extends Specification {
 
-    void "Test the index action returns the correct model"() {
+    void "Test the index action invoke correct"() {
 
         setup:
+        List userList = new ArrayList()
         Person currentUser = Person.build().save()
 
         Set followedPersonSet = new LinkedHashSet()
@@ -31,33 +32,39 @@ class StatusControllerSpec extends Specification {
         Person followedPerson = Person.build()
         followedPerson.userName = 'followedperson'
         followedPerson.save()
+
         followedPersonSet.add(followedPerson)
 
         currentUser.followed = followedPersonSet
 
-        def twitterSecurityService = Mock(TwitterSecurityService)
-        twitterSecurityService.getCurrentUser() >> currentUser
-        controller.twitterSecurityService = twitterSecurityService
+        Set followersPersonSet = new LinkedHashSet()
 
         Status status = new Status(message: 'test message', author: currentUser).save()
+        List statusList = new ArrayList()
+        statusList.add(status)
 
-        def timelineService = Stub(TimelineService)
-        timelineService.twitterSecurityService = twitterSecurityService
-        List list = new ArrayList()
-        list.add(status)
-        timelineService.timelineForUser >> list
-        controller.timelineService = timelineService
+        and: "Mocks"
+        controller.twitterSecurityService = Mock(TwitterSecurityService)
+        controller.timelineService = Mock(TimelineService)
+        controller.statusService = Mock(StatusService)
+        controller.personService = Mock(PersonService)
 
         when: "The index action is executed"
-        Map map = controller.index()
+        Map result = controller.index()
 
-        then: "The model is correct"
-        map.statusMessages.size() == 1
-        map.totalStatusCount == 1
-        map.following.size() == 1
-        map.followers.size() == 0
-        map.otherUsers.size() == 0
-
+        then: "The invoked is correct"
+        1 * controller.timelineService.timelineForUser >> statusList
+        1 * controller.twitterSecurityService.currentUser >> currentUser
+        1 * controller.statusService.totalStatusCountByUser(currentUser) >> statusList.size()
+        1 * controller.personService.getFollowed(currentUser) >> followedPersonSet
+        1 * controller.personService.getFollowers(currentUser) >> followersPersonSet
+        1 * controller.personService.personInstanceList(null) >> userList
+        result.statusMessages == statusList
+        result.person == currentUser
+        result.totalStatusCount == statusList.size()
+        result.following == followedPersonSet
+        result.followers == followersPersonSet
+        result.otherUsers == userList
     }
 
     void "Test the updateStatus action returns the correct model"() {

@@ -7,7 +7,6 @@ import grails.transaction.Transactional
 @Transactional
 class StatusService {
 
-    def groovyPageRenderer
     def twitterSecurityService
 
     def getFollowersOf(String userName) {
