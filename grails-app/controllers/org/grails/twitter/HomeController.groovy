@@ -8,7 +8,7 @@ class HomeController {
     def index() {
         def person = twitterSecurityService.currentUser
         def messages;
-        if (person == null) {
+        if (person) {
             messages = timelineService.timelineForAnonymousUser
         } else {
             messages = timelineService.timelineForUser
