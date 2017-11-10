@@ -1,11 +1,9 @@
 package org.grails.twitter
 
-import grails.transaction.Transactional
 import org.grails.twitter.auth.Person
 
 import static org.springframework.http.HttpStatus.CREATED
 
-@Transactional(readOnly = false)
 class PersonController {
 
     def statusService
@@ -13,7 +11,7 @@ class PersonController {
 
     def index(Integer max) {
         params.max = Math.min(max ?: 10, 100)
-        [personInstanceCount: personService.personCount(), personInstanceList: personService.personInstanceList(params)]
+        [personInstanceCount: personService.getPersonCount(), personInstanceList: personService.getPersonInstanceList(params)]
     }
 
     def unfollow(String userToUnfollow) {

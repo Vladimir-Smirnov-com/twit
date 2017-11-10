@@ -9,14 +9,14 @@ import static org.springframework.http.HttpStatus.CREATED
 class PersonService {
 
     void save(Person person) {
-        person.save flush: true
+        person.save()
     }
 
-    Integer personCount() {
+    Integer getPersonCount() {
         Person.count()
     }
 
-    List personInstanceList(Map params) {
+    List getPersonInstanceList(Map params) {
         Person.list(params)
     }
 

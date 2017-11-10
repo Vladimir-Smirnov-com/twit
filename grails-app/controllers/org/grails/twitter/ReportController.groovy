@@ -17,21 +17,19 @@ class ReportController {
     }
 
     def print() {
-        ByteArrayOutputStream pdfStream = null
+        ByteArrayOutputStream pdfStream = new ByteArrayOutputStream();
         try {
             String reportName, namaFile, dotJasper
             namaFile = "StatusReport"
-            reportName = grailsApplication.mainContext.getResource('reports/' + namaFile + '.jrxml').file.getAbsoluteFile()
-            dotJasper = grailsApplication.mainContext.getResource('reports/' + namaFile + '.jasper').file.getAbsoluteFile()
+            reportName = getAbsoluteReportFilePath(namaFile + '.jrxml')
+            dotJasper = getAbsoluteReportFilePath(namaFile + '.jrxml')
 
             // Report parameter
-            Map<String, String> reportParam = new HashMap<String, String>()
+            Map<String, String> reportParam = [:]
             // compiles jrxml
             JasperCompileManager.compileReportToFile(reportName);
             // fills compiled report with parameters and a connection
-            JasperPrint print = JasperFillManager.fillReport(dotJasper, reportParam, new JRBeanCollectionDataSource(personService.personInstanceList()));
-
-            pdfStream = new ByteArrayOutputStream();
+            JasperPrint print = JasperFillManager.fillReport(dotJasper, reportParam, new JRBeanCollectionDataSource(personService.getPersonInstanceList()));
 
             // exports report to pdf
             JRExporter exporter = new JRPdfExporter();
@@ -40,15 +38,17 @@ class ReportController {
 
             exporter.exportReport();
 
-        } catch (Exception e) {
+            render(file: pdfStream.toByteArray(), contentType: 'application/pdf')
 
+        } catch (Exception e) {
             throw new RuntimeException("It's not possible to generate the pdf report.", e);
         } finally {
-            if (pdfStream != null) {
-                render(file: pdfStream.toByteArray(), contentType: 'application/pdf')
-                pdfStream.close()
-            }
+            pdfStream.close()
         }
+    }
+
+    private String getAbsoluteReportFilePath(namaFile) {
+        grailsApplication.mainContext.getResource('reports/' + namaFile).file.getAbsoluteFile()
     }
 
 }

@@ -2,7 +2,7 @@ package org.grails.twitter
 
 import grails.plugin.springsecurity.annotation.Secured
 import java.security.Principal
-import org.grails.twitter.auth.Person
+
 import org.springframework.messaging.handler.annotation.MessageMapping
 
 @Secured('isAuthenticated()')
@@ -22,7 +22,7 @@ class StatusController {
 
         def following = personService.getFollowed(person)
         def followers = personService.getFollowers(person)
-        def otherUsers = personService.personInstanceList() - following - followers - person
+        def otherUsers = personService.getPersonInstanceList() - following - followers - person
 
         [statusMessages  : messages,
          person          : person,
