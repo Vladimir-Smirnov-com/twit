@@ -1,6 +1,5 @@
 package org.grails.twitter
 
-import grails.plugin.springsecurity.annotation.Secured
 import net.sf.jasperreports.engine.JRExporter
 import net.sf.jasperreports.engine.JRExporterParameter
 import net.sf.jasperreports.engine.JasperCompileManager
@@ -9,7 +8,6 @@ import net.sf.jasperreports.engine.JasperPrint
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource
 import net.sf.jasperreports.engine.export.JRPdfExporter
 
-@Secured('isAuthenticated()')
 class ReportController {
 
     def personService
@@ -21,10 +19,10 @@ class ReportController {
     def print() {
         ByteArrayOutputStream pdfStream = new ByteArrayOutputStream();
         try {
-            String reportName, namaFile, dotJasper
-            namaFile = "StatusReport"
-            reportName = getAbsoluteReportFilePath(namaFile + '.jrxml')
-            dotJasper = getAbsoluteReportFilePath(namaFile + '.jrxml')
+            String reportName, fileName, dotJasper
+            fileName = "StatusReport"
+            reportName = getAbsoluteReportFilePath('reports/' + fileName + '.jrxml')
+            dotJasper = getAbsoluteReportFilePath('reports/' + fileName + '.jasper')
 
             // Report parameter
             Map<String, String> reportParam = [:]
@@ -49,8 +47,8 @@ class ReportController {
         }
     }
 
-    private String getAbsoluteReportFilePath(namaFile) {
-        grailsApplication.mainContext.getResource('reports/' + namaFile).file.getAbsoluteFile()
+    private String getAbsoluteReportFilePath(String fileName) {
+        grailsApplication.mainContext.getResource(fileName).file.getAbsoluteFile()
     }
 
 }

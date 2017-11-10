@@ -1,20 +1,14 @@
 package org.grails.twitter
 
 import grails.buildtestdata.mixin.Build
-import grails.gorm.PagedResultList
 import grails.gsp.PageRenderer
-import grails.plugin.springsecurity.SpringSecurityService
 import grails.plugin.springsecurity.userdetails.GrailsUser
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.grails.twitter.auth.Person
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import spock.lang.Ignore
 import spock.lang.Specification
-
-import javax.rmi.CORBA.Stub
-import java.security.Principal
 
 @TestFor(StatusController)
 @Mock([Person, Status, StatusService, PersonService])
@@ -58,7 +52,7 @@ class StatusControllerSpec extends Specification {
         1 * controller.statusService.totalStatusCountByUser(currentUser) >> statusList.size()
         1 * controller.personService.getFollowed(currentUser) >> followedPersonSet
         1 * controller.personService.getFollowers(currentUser) >> followersPersonSet
-        1 * controller.personService.personInstanceList(null) >> userList
+        1 * controller.personService.getPersonInstanceList(null) >> userList
         result.statusMessages == statusList
         result.person == currentUser
         result.totalStatusCount == statusList.size()
@@ -70,8 +64,12 @@ class StatusControllerSpec extends Specification {
     void "Test the updateStatus action returns the correct model"() {
 
         setup:
-        StatusService statusService = Stub(StatusService)
-        controller.statusService = statusService
+        controller.statusService = Mock(StatusService)
+        PageRenderer pageRenderer = Mock(PageRenderer)
+        //pageRenderer.render(new HashMap()) { "Test html string" }
+        controller.groovyPageRenderer = pageRenderer
+        SimpMessagingTemplate messagingTemplate = Mock(SimpMessagingTemplate)
+        controller.brokerMessagingTemplate = messagingTemplate
         Person currentUser = Person.build().save();
         def twitterSecurityService = Mock(TwitterSecurityService)
         twitterSecurityService.getCurrentUser() >> currentUser
@@ -81,11 +79,19 @@ class StatusControllerSpec extends Specification {
         GrailsUser grailsUser = Mock(GrailsUser)
         grailsUser.username >> currentUser.getUserName()
         usernamePasswordAuthenticationToken.principal >> grailsUser
+        String testMessage = 'test message'
 
         when: "The updateStatus action is executed"
-        String result = controller.updateStatus("test message", usernamePasswordAuthenticationToken)
+        String result = controller.updateStatus(testMessage, usernamePasswordAuthenticationToken)
 
         then: "The model is correct"
-        result.isEmpty()
+        //result.isEmpty()
+        1 * controller.statusService.updateStatus (testMessage, currentUser.getUserName())
+        1 * controller.groovyPageRenderer.render(['template':'/status/statusMessage', 'model':['statusMessage':null]])
+        //1 * controller.groovyPageRenderer.render
+        //1 * <StatusService>.getFollowersOf('userName')
+        1 * controller.statusService.getFollowersOf(currentUser.getUserName()) { new ArrayList<>().add(currentUser) }
+        //brokerMessagingTemplate.convertAndSendToUser user, '/queue/timeline', html
+        1 * messagingTemplate.convertAndSendToUser('u', '/queue/timeline', null)
     }
 }
